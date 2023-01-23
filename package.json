@@ -6,6 +6,7 @@
   "type": "module",
   "files": [
     "build/src",
+    "build/stubs",
     "build/index.d.ts",
     "build/index.js"
   ],
@@ -18,7 +19,8 @@
     "pretest": "npm run lint",
     "test": "c8 npm run vscode:test",
     "clean": "del-cli build",
-    "compile": "npm run lint && npm run clean && tsc",
+    "copy:templates": "copyfiles \"stubs/**/*.stub\" build",
+    "compile": "npm run lint && npm run clean && tsc && npm run copy:templates",
     "build": "npm run compile",
     "release": "np",
     "version": "npm run build",
@@ -50,6 +52,7 @@
     "@types/serve-static": "^1.15.0",
     "@types/supertest": "^2.0.12",
     "c8": "^7.12.0",
+    "copyfiles": "^2.4.1",
     "del-cli": "^5.0.0",
     "eslint": "^8.17.0",
     "eslint-config-prettier": "^8.5.0",
@@ -124,5 +127,8 @@
   },
   "directories": {
     "test": "tests"
+  },
+  "adonisjs": {
+    "stubs": "./build/stubs"
   }
 }
