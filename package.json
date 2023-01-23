@@ -7,13 +7,15 @@
   "files": [
     "build/src",
     "build/stubs",
+    "build/providers",
     "build/index.d.ts",
     "build/index.js"
   ],
   "exports": {
     ".": "./build/index.js",
     "./types": "./build/src/types.js",
-    "./static_middleware": "./build/src/static_middleware.js"
+    "./static_middleware": "./build/src/static_middleware.js",
+    "./static_provider": "./build/providers/static_provider.js"
   },
   "scripts": {
     "pretest": "npm run lint",
