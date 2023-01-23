@@ -17,7 +17,7 @@ import type { HttpContext, Response } from '@adonisjs/http-server'
 /**
  * Middleware to serve static assets from a pre-defined directory
  */
-export class StaticMiddleware {
+export default class StaticMiddleware {
   #sendFile: RequestHandler<ServerResponse & { parent?: Response }>
 
   constructor(publicPath: string, config: AssetsConfig) {

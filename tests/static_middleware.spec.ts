@@ -19,7 +19,7 @@ import {
   HttpContextFactory,
 } from '@adonisjs/http-server/factories'
 
-import { StaticMiddleware } from '../src/static_middleware.js'
+import StaticMiddleware from '../src/static_middleware.js'
 
 const BASE_URL = new URL('./tmp/', import.meta.url)
 const BASE_PATH = fileURLToPath(BASE_URL)

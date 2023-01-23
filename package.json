@@ -11,7 +11,8 @@
   ],
   "exports": {
     ".": "./build/index.js",
-    "./types": "./build/src/types.js"
+    "./types": "./build/src/types.js",
+    "./static_middleware": "./build/src/static_middleware.js"
   },
   "scripts": {
     "pretest": "npm run lint",
