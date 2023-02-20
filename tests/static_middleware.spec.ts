@@ -11,14 +11,11 @@ import fs from 'fs-extra'
 import { join } from 'node:path'
 import supertest from 'supertest'
 import { test } from '@japa/runner'
-import { fileURLToPath } from 'node:url'
 import { createServer } from 'node:http'
-import {
-  RequestFactory,
-  ResponseFactory,
-  HttpContextFactory,
-} from '@adonisjs/http-server/factories'
+import { fileURLToPath } from 'node:url'
+import { RequestFactory, ResponseFactory, HttpContextFactory } from '@adonisjs/core/factories/http'
 
+import { defineConfig } from '../index.js'
 import StaticMiddleware from '../src/static_middleware.js'
 
 const BASE_URL = new URL('./tmp/', import.meta.url)
@@ -33,9 +30,7 @@ test.group('Serve Static', (group) => {
     await fs.outputFile(join(BASE_PATH, 'public/style.css'), 'body { background: #000 }')
 
     const server = createServer(async (req, res) => {
-      const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), {
-        enabled: true,
-      })
+      const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), defineConfig({}))
 
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
@@ -54,9 +49,7 @@ test.group('Serve Static', (group) => {
     await fs.outputFile(join(BASE_PATH, 'public/style.css'), 'body { background: #000 }')
 
     const server = createServer(async (req, res) => {
-      const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), {
-        enabled: true,
-      })
+      const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), defineConfig({}))
 
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
@@ -76,9 +69,7 @@ test.group('Serve Static', (group) => {
 
   test('call next when not serving file', async () => {
     const server = createServer(async (req, res) => {
-      const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), {
-        enabled: true,
-      })
+      const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), defineConfig({}))
 
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
@@ -95,9 +86,7 @@ test.group('Serve Static', (group) => {
 
   test('report errors raised by the next function', async ({ assert }) => {
     const server = createServer(async (req, res) => {
-      const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), {
-        enabled: true,
-      })
+      const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), defineConfig({}))
 
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
@@ -122,14 +111,16 @@ test.group('Serve Static', (group) => {
     await fs.outputFile(join(BASE_PATH, 'public/style.css'), 'body { background: #000 }')
 
     const server = createServer(async (req, res) => {
-      const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), {
-        enabled: true,
-        headers(path) {
-          return {
-            'X-Custom-Path': path,
-          }
-        },
-      })
+      const serveStatic = new StaticMiddleware(
+        join(BASE_PATH, 'public'),
+        defineConfig({
+          headers(path) {
+            return {
+              'X-Custom-Path': path,
+            }
+          },
+        })
+      )
 
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()

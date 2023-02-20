@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
-export { configure } from './configure.js'
-export { stubsRoot } from './stubs/index.js'
-export { defineConfig } from './src/define_config.js'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+export const stubsRoot = dirname(fileURLToPath(import.meta.url))
