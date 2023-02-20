@@ -138,5 +138,13 @@
   },
   "adonisjs": {
     "stubs": "./build/stubs"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adonisjs/static.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/static/issues"
+  },
+  "homepage": "https://github.com/adonisjs/static#readme"
 }
