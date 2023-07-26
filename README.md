@@ -2,7 +2,7 @@
 
 <br />
 
-[![gh-workflow-image]][gh-workflow-url] [![npm-image]][npm-url] ![][typescript-image] [![license-image]][license-url] [![snyk-image]][snyk-url]
+[![gh-workflow-image]][gh-workflow-url] [![npm-image]][npm-url] ![][typescript-image] [![license-image]][license-url]
 
 ## Introduction
 Middleware to serve static files from a given directory of your AdonisJS apps
@@ -31,6 +31,3 @@ AdonisJS static files middleware is open-sourced software licensed under the [MI
 
 [license-url]: LICENSE.md
 [license-image]: https://img.shields.io/github/license/adonisjs/static?style=for-the-badge
-
-[snyk-image]: https://img.shields.io/snyk/vulnerabilities/github/adonisjs/static?label=Snyk%20Vulnerabilities&style=for-the-badge
-[snyk-url]: https://snyk.io/test/github/adonisjs/static?targetFile=package.json "snyk"
