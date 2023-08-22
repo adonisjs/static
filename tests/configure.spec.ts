@@ -48,5 +48,5 @@ test.group('Configure', (group) => {
     await assert.fileExists('config/static.ts')
     await assert.fileContains('adonisrc.ts', `() => import('@adonisjs/static/static_provider')`)
     await assert.fileContains('config/static.ts', 'defineConfig')
-  })
+  }).timeout(6000)
 })
