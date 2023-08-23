@@ -22,6 +22,7 @@ test.group('Configure', (group) => {
 
   test('create config file and register provider', async ({ assert, fs }) => {
     await fs.createJson('tsconfig.json', {})
+    await fs.create('start/kernel.ts', `server.use([])`)
     await fs.create('adonisrc.ts', `export default defineConfig({})`)
 
     const ignitor = new IgnitorFactory()
@@ -48,5 +49,9 @@ test.group('Configure', (group) => {
     await assert.fileExists('config/static.ts')
     await assert.fileContains('adonisrc.ts', `() => import('@adonisjs/static/static_provider')`)
     await assert.fileContains('config/static.ts', 'defineConfig')
-  }).timeout(6000)
+    await assert.fileContains(
+      'start/kernel.ts',
+      `() => import('@adonisjs/static/static_middleware')`
+    )
+  }).timeout(1000 * 10)
 })
