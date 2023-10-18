@@ -73,7 +73,7 @@
     "serve-static": "^1.15.0"
   },
   "peerDependencies": {
-    "@adonisjs/core": "^6.1.5-19"
+    "@adonisjs/core": "^6.1.5-27"
   },
   "commitlint": {
     "extends": [
