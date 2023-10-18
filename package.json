@@ -5,13 +5,7 @@
   "main": "build/index.js",
   "type": "module",
   "files": [
-    "build/src",
-    "build/stubs",
-    "build/providers",
-    "build/index.d.ts",
-    "build/index.js",
-    "build/configure.d.ts",
-    "build/configure.js"
+    "build"
   ],
   "engines": {
     "node": ">=18.16.0"
@@ -27,8 +21,8 @@
     "test": "c8 npm run quick:test",
     "clean": "del-cli build",
     "typecheck": "tsc --noEmit",
-    "copy:templates": "copyfiles \"stubs/**/*.stub\" build",
-    "compile": "npm run lint && npm run clean && tsc && npm run copy:templates",
+    "copy:templates": "copyfiles --up 1 \"stubs/**/*.stub\" build",
+    "compile": "npm run lint && npm run clean && tsup-node && npm run copy:templates",
     "build": "npm run compile",
     "release": "np",
     "version": "npm run build",
@@ -72,6 +66,7 @@
     "prettier": "^3.0.3",
     "supertest": "^6.3.3",
     "ts-node": "^10.9.1",
+    "tsup": "^7.2.0",
     "typescript": "^5.2.2"
   },
   "dependencies": {
@@ -122,5 +117,18 @@
   "prettier": "@adonisjs/prettier-config",
   "eslintConfig": {
     "extends": "@adonisjs/eslint-config/package"
+  },
+   "tsup": {
+    "entry": [
+      "./index.ts",
+      "./src/types.ts",
+      "./src/static_middleware.ts",
+      "./providers/static_provider.ts"
+    ],
+    "outDir": "./build",
+    "clean": true,
+    "format": "esm",
+    "dts": true,
+    "target": "esnext"
   }
 }
