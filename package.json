@@ -5,7 +5,9 @@
   "main": "build/index.js",
   "type": "module",
   "files": [
-    "build"
+    "build",
+    "!build/bin",
+    "!build/tests"
   ],
   "engines": {
     "node": ">=18.16.0"
@@ -22,14 +24,16 @@
     "clean": "del-cli build",
     "typecheck": "tsc --noEmit",
     "copy:templates": "copyfiles --up 1 \"stubs/**/*.stub\" build",
-    "compile": "npm run lint && npm run clean && tsup-node && npm run copy:templates",
+    "precompile": "npm run lint && npm run clean",
+    "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
+    "postcompile": "npm run copy:templates",
     "build": "npm run compile",
     "release": "np",
     "version": "npm run build",
     "format": "prettier --write .",
     "prepublishOnly": "npm run build",
     "lint": "eslint . --ext=.ts",
-    "sync-labels": "github-label-sync --labels .github/labels.json adonisjs/cors",
+    "sync-labels": "github-label-sync --labels .github/labels.json adonisjs/static",
     "quick:test": "node --loader=ts-node/esm bin/test.ts"
   },
   "keywords": [
@@ -121,14 +125,14 @@
   "tsup": {
     "entry": [
       "./index.ts",
-      "./src/types.ts",
       "./src/static_middleware.ts",
       "./providers/static_provider.ts"
     ],
     "outDir": "./build",
     "clean": true,
     "format": "esm",
-    "dts": true,
+    "dts": false,
+    "sourcemap": true,
     "target": "esnext"
   }
 }
