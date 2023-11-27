@@ -31,5 +31,6 @@ export async function configure(command: Configure) {
    */
   await codemods.updateRcFile((rcFile) => {
     rcFile.addProvider('@adonisjs/static/static_provider')
+    rcFile.addMetaFile('public/**', false)
   })
 }
