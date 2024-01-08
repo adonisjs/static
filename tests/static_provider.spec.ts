@@ -25,24 +25,16 @@ test.group('Static provider', () => {
           },
         },
         rcFileContents: {
-          providers: ['../../providers/static_provider.js'],
+          providers: [() => import('../providers/static_provider.js')],
         },
       })
-      .create(BASE_URL, {
-        importer: (filePath) => {
-          if (filePath.startsWith('./') || filePath.startsWith('../')) {
-            return import(new URL(filePath, BASE_URL).href)
-          }
-
-          return import(filePath)
-        },
-      })
+      .create(BASE_URL)
 
     const app = ignitor.createApp('web')
     await app.init()
     await app.boot()
 
-    await assert.doesNotRejects(() => app.container.make(StaticMiddleware))
+    await assert.doesNotReject(() => app.container.make(StaticMiddleware))
     assert.instanceOf(await app.container.make(StaticMiddleware), StaticMiddleware)
   })
 })
