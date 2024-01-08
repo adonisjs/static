@@ -125,6 +125,7 @@
   "tsup": {
     "entry": [
       "./index.ts",
+      "./src/types.ts",
       "./src/static_middleware.ts",
       "./providers/static_provider.ts"
     ],
