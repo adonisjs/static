@@ -9,6 +9,7 @@
 
 import type { ApplicationService } from '@adonisjs/core/types'
 import StaticMiddleware from '../src/static_middleware.js'
+import { defineConfig } from '../src/define_config.js'
 
 /**
  * Static files provider to configure Static middleware using the
@@ -20,7 +21,7 @@ export default class StaticProvider {
   register() {
     this.app.container.bind(StaticMiddleware, () => {
       const publicPath = this.app.publicPath()
-      const config = this.app.config.get<any>('static', {})
+      const config = this.app.config.get<any>('static', defineConfig({}))
       return new StaticMiddleware(publicPath, config)
     })
   }
