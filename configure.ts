@@ -19,7 +19,7 @@ export async function configure(command: Configure) {
   /**
    * Publish config to "config/static.ts" file
    */
-  await codemods.makeUsingStub(stubsRoot, 'static/config.stub', {})
+  await codemods.makeUsingStub(stubsRoot, 'config/static.stub', {})
 
   /**
    * Register static middleware
