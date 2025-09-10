@@ -10,7 +10,28 @@
 import { type AssetsConfig } from './types.ts'
 
 /**
- * Define config for serving static assets
+ * Define configuration for serving static assets.
+ *
+ * This function creates a complete AssetsConfig object by merging user-provided
+ * configuration with sensible defaults. It ensures all required properties are
+ * present while allowing customization of specific options.
+ *
+ * @param config - Partial configuration object to customize static asset serving behavior
+ *
+ * @example
+ * ```ts
+ * const config = defineConfig({
+ *   maxAge: '1d',
+ *   etag: false,
+ *   dotFiles: 'deny'
+ * })
+ * ```
+ *
+ * @example
+ * ```ts
+ * // Minimal configuration with defaults
+ * const config = defineConfig({})
+ * ```
  */
 export function defineConfig(config: Partial<AssetsConfig>): AssetsConfig {
   return {

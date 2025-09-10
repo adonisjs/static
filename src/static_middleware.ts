@@ -14,11 +14,41 @@ import staticServer, { type RequestHandler } from 'serve-static'
 import type { AssetsConfig } from './types.ts'
 
 /**
- * Middleware to serve static assets from a pre-defined directory
+ * Middleware to serve static assets from a pre-defined directory.
+ *
+ * This middleware integrates with the serve-static package to handle static file serving
+ * in AdonisJS applications, with support for custom headers, caching, and other configuration options.
+ *
+ * @example
+ * ```ts
+ * const middleware = new StaticMiddleware('./public', {
+ *   enabled: true,
+ *   maxAge: '1d',
+ *   etag: true
+ * })
+ * ```
  */
 export default class StaticMiddleware {
+  /**
+   * Internal serve-static request handler with custom response type
+   */
   #sendFile: RequestHandler<ServerResponse & { parent?: Response }>
 
+  /**
+   * Creates a new StaticMiddleware instance.
+   *
+   * @param publicPath - The absolute path to the directory containing static assets
+   * @param config - Configuration options for static file serving
+   *
+   * @example
+   * ```ts
+   * const middleware = new StaticMiddleware('/path/to/public', {
+   *   enabled: true,
+   *   maxAge: 86400000,
+   *   dotFiles: 'ignore'
+   * })
+   * ```
+   */
   constructor(publicPath: string, config: AssetsConfig) {
     this.#sendFile = staticServer(publicPath, {
       ...config,
@@ -46,7 +76,23 @@ export default class StaticMiddleware {
   }
 
   /**
-   * Handle the request to serve static files.
+   * Handle the HTTP request to serve static files.
+   *
+   * This method attempts to serve a static file from the configured directory.
+   * If no matching file is found, it passes control to the next middleware in the chain.
+   * The method ensures proper response handling by waiting for the file stream to complete
+   * before resolving.
+   *
+   * @param context - The HTTP context containing request and response objects
+   * @param next - The next function to call if no static file matches the request
+   *
+   * @example
+   * ```ts
+   * // Usage within AdonisJS middleware pipeline
+   * async handle(ctx, next) {
+   *   await staticMiddleware.handle(ctx, next)
+   * }
+   * ```
    */
   async handle({ request, response }: HttpContext, next: NextFn) {
     const serveStaticResponse: ServerResponse & { parent?: Response } = response.response
