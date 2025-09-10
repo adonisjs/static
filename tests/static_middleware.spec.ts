@@ -15,8 +15,8 @@ import { createServer } from 'node:http'
 import { fileURLToPath } from 'node:url'
 import { RequestFactory, ResponseFactory, HttpContextFactory } from '@adonisjs/core/factories/http'
 
-import { defineConfig } from '../index.js'
-import StaticMiddleware from '../src/static_middleware.js'
+import { defineConfig } from '../index.ts'
+import StaticMiddleware from '../src/static_middleware.ts'
 
 const BASE_URL = new URL('./tmp/', import.meta.url)
 const BASE_PATH = fileURLToPath(BASE_URL)

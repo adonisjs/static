@@ -11,7 +11,7 @@ import { type ServerResponse } from 'node:http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import type { HttpContext, Response } from '@adonisjs/core/http'
 import staticServer, { type RequestHandler } from 'serve-static'
-import type { AssetsConfig } from './types.js'
+import type { AssetsConfig } from './types.ts'
 
 /**
  * Middleware to serve static assets from a pre-defined directory

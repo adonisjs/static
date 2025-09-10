@@ -9,7 +9,7 @@
 
 import { test } from '@japa/runner'
 import { IgnitorFactory } from '@adonisjs/core/factories'
-import StaticMiddleware from '../src/static_middleware.js'
+import StaticMiddleware from '../src/static_middleware.ts'
 
 const BASE_URL = new URL('./tmp/', import.meta.url)
 
