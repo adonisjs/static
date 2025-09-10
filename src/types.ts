@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { Stats } from 'node:fs'
+import { type Stats } from 'node:fs'
 
 /**
  * Config for static file server

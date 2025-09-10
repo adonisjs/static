@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { AssetsConfig } from './types.js'
+import { type AssetsConfig } from './types.js'
 
 /**
  * Define config for serving static assets

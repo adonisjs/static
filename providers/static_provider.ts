@@ -8,8 +8,8 @@
  */
 
 import type { ApplicationService } from '@adonisjs/core/types'
-import StaticMiddleware from '../src/static_middleware.js'
 import { defineConfig } from '../src/define_config.js'
+import StaticMiddleware from '../src/static_middleware.js'
 
 /**
  * Static files provider to configure Static middleware using the
