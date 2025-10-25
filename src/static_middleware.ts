@@ -37,6 +37,10 @@ export default class StaticMiddleware {
   /**
    * Creates a new StaticMiddleware instance.
    *
+   * Initializes the middleware with a serve-static handler configured to serve files
+   * from the specified directory with the provided options. The middleware automatically
+   * handles header propagation and custom header injection.
+   *
    * @param publicPath - The absolute path to the directory containing static assets
    * @param config - Configuration options for static file serving
    *
@@ -85,6 +89,7 @@ export default class StaticMiddleware {
    *
    * @param context - The HTTP context containing request and response objects
    * @param next - The next function to call if no static file matches the request
+   * @returns A promise that resolves when the static file has been served or the request has been passed to the next middleware
    *
    * @example
    * ```ts
@@ -94,7 +99,7 @@ export default class StaticMiddleware {
    * }
    * ```
    */
-  async handle({ request, response }: HttpContext, next: NextFn) {
+  async handle({ request, response }: HttpContext, next: NextFn): Promise<void> {
     const serveStaticResponse: ServerResponse & { parent?: Response } = response.response
     serveStaticResponse['parent'] = response
 

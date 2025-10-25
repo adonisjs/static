@@ -89,10 +89,17 @@ export type AssetsConfig = {
 
   /**
    * Function to set custom headers on the response.
-   * Called for each served file with the file path and stats
-   *
-   * @param path - The path to the file being served
-   * @param stats - Node.js fs.Stats object with file information
+   * Called for each served file with the file path and stats.
+   * Return an object where keys are header names and values are header values.
    */
-  headers?: (path: string, stats: Stats) => Record<string, any>
+  headers?: (
+    /**
+     * The absolute path to the file being served
+     */
+    path: string,
+    /**
+     * Node.js fs.Stats object containing file metadata like size, modification time, etc.
+     */
+    stats: Stats
+  ) => Record<string, any>
 }
