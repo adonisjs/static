@@ -60,7 +60,7 @@ export default class StaticProvider {
    * ```
    */
   register() {
-    this.app.container.bind(StaticMiddleware, () => {
+    this.app.container.singleton(StaticMiddleware, () => {
       const publicPath = this.app.publicPath()
       const config = this.app.config.get<any>('static', defineConfig({}))
       return new StaticMiddleware(publicPath, config)
