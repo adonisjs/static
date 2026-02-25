@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/static",
-  "version": "2.0.0-next.1",
+  "version": "2.0.0",
   "description": "Static file server for AdonisJS",
   "main": "build/index.js",
   "type": "module",
