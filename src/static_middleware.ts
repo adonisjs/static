@@ -9,8 +9,8 @@
 
 import { type ServerResponse } from 'node:http'
 import type { NextFn } from '@adonisjs/core/types/http'
-import type { HttpContext, Response } from '@adonisjs/core/http'
 import staticServer, { type RequestHandler } from 'serve-static'
+import type { HttpContext, HttpResponse } from '@adonisjs/core/http'
 import type { AssetsConfig } from './types.ts'
 
 /**
@@ -32,7 +32,7 @@ export default class StaticMiddleware {
   /**
    * Internal serve-static request handler with custom response type
    */
-  #sendFile: RequestHandler<ServerResponse & { parent?: Response }>
+  #sendFile: RequestHandler<ServerResponse & { parent?: HttpResponse }>
 
   /**
    * Creates a new StaticMiddleware instance.
@@ -100,7 +100,7 @@ export default class StaticMiddleware {
    * ```
    */
   async handle({ request, response }: HttpContext, next: NextFn): Promise<void> {
-    const serveStaticResponse: ServerResponse & { parent?: Response } = response.response
+    const serveStaticResponse: ServerResponse & { parent?: HttpResponse } = response.response
     serveStaticResponse['parent'] = response
 
     /**
