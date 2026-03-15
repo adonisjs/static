@@ -54,8 +54,11 @@ export default class StaticMiddleware {
    * ```
    */
   constructor(publicPath: string, config: AssetsConfig) {
+    const { dotFiles, ...rest } = config
+
     this.#sendFile = staticServer(publicPath, {
-      ...config,
+      ...rest,
+      dotfiles: dotFiles,
       fallthrough: true,
       setHeaders: (res, path, stats) => {
         const headers = res.parent!.getHeaders()
