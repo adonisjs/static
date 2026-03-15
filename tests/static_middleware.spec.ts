@@ -136,7 +136,7 @@ test.group('Serve Static', (group) => {
     assert.equal(Buffer.from(res.body).toString(), 'merchant-id-content')
   })
 
-  test('ignore dotfiles by default', async ({ assert }) => {
+  test('ignore dotfiles by default', async () => {
     await fs.outputFile(join(BASE_PATH, 'public/.env'), 'SECRET=123')
 
     const server = createServer(async (req, res) => {
