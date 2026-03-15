@@ -107,6 +107,54 @@ test.group('Serve Static', (group) => {
     assert.equal(text, 'Route not found')
   })
 
+  test('serve files inside dotfile directories when dotFiles is allow', async ({ assert }) => {
+    await fs.outputFile(
+      join(BASE_PATH, 'public/.well-known/apple-developer-merchantid-domain-association'),
+      'merchant-id-content'
+    )
+
+    const server = createServer(async (req, res) => {
+      const serveStatic = new StaticMiddleware(
+        join(BASE_PATH, 'public'),
+        defineConfig({ dotFiles: 'allow' })
+      )
+
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      await serveStatic.handle(ctx, () => {
+        ctx.response.status(404).send('404')
+        ctx.response.finish()
+      })
+    })
+
+    const res = await supertest(server)
+      .get('/.well-known/apple-developer-merchantid-domain-association')
+      .expect(200)
+
+    assert.equal(Buffer.from(res.body).toString(), 'merchant-id-content')
+  })
+
+  test('ignore dotfiles by default', async () => {
+    await fs.outputFile(join(BASE_PATH, 'public/.env'), 'SECRET=123')
+
+    const server = createServer(async (req, res) => {
+      const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), defineConfig({}))
+
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      await serveStatic.handle(ctx, () => {
+        ctx.response.status(404).send('404')
+        ctx.response.finish()
+      })
+    })
+
+    await supertest(server).get('/.env').expect(404)
+  })
+
   test('set headers defined via config', async ({ assert }) => {
     await fs.outputFile(join(BASE_PATH, 'public/style.css'), 'body { background: #000 }')
 
