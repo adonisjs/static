@@ -8,6 +8,8 @@
  */
 
 import { type ServerResponse } from 'node:http'
+import { readdirSync } from 'node:fs'
+import { join, resolve as resolvePath, sep } from 'node:path'
 import type { NextFn } from '@adonisjs/core/types/http'
 import staticServer, { type RequestHandler } from 'serve-static'
 import type { HttpContext, HttpResponse } from '@adonisjs/core/http'
@@ -34,6 +36,10 @@ export default class StaticMiddleware {
    */
   #sendFile: RequestHandler<ServerResponse & { parent?: HttpResponse }>
 
+  #publicPath: string
+  #files?: Set<string>
+  #symbolicLinks: string[] = []
+
   /**
    * Creates a new StaticMiddleware instance.
    *
@@ -54,7 +60,29 @@ export default class StaticMiddleware {
    * ```
    */
   constructor(publicPath: string, config: AssetsConfig) {
-    const { dotFiles, ...rest } = config
+    const { dotFiles, indexFiles, ...rest } = config
+    this.#publicPath = resolvePath(publicPath)
+
+    if (indexFiles) {
+      // Leave case and Unicode variants to serve-static and the underlying filesystem.
+      this.#files = new Set([this.#publicPath.normalize('NFC').toUpperCase()])
+      try {
+        for (const entry of readdirSync(this.#publicPath, {
+          recursive: true,
+          withFileTypes: true,
+        })) {
+          const filePath = join(entry.parentPath, entry.name).normalize('NFC').toUpperCase()
+          this.#files.add(filePath)
+          if (entry.isSymbolicLink()) {
+            this.#symbolicLinks.push(filePath + sep)
+          }
+        }
+      } catch (error) {
+        if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) {
+          throw error
+        }
+      }
+    }
 
     this.#sendFile = staticServer(publicPath, {
       ...rest,
@@ -83,6 +111,28 @@ export default class StaticMiddleware {
   }
 
   /**
+   * Skip definite misses while leaving path validation and symlink resolution to serve-static.
+   */
+  #isIndexed(url: string): boolean {
+    if (!url.startsWith('/')) {
+      return true
+    }
+
+    let filePath: string
+    try {
+      const pathname = decodeURIComponent(url.split(/[?#]/, 1)[0])
+      filePath = resolvePath(this.#publicPath, `.${sep}${pathname}`).normalize('NFC').toUpperCase()
+    } catch {
+      return true
+    }
+
+    return (
+      this.#files!.has(filePath) ||
+      this.#symbolicLinks.some((prefix) => filePath.startsWith(prefix))
+    )
+  }
+
+  /**
    * Handle the HTTP request to serve static files.
    *
    * This method attempts to serve a static file from the configured directory.
@@ -103,6 +153,15 @@ export default class StaticMiddleware {
    * ```
    */
   async handle({ request, response }: HttpContext, next: NextFn): Promise<void> {
+    if (
+      this.#files &&
+      (request.request.method === 'GET' || request.request.method === 'HEAD') &&
+      !this.#isIndexed(request.request.url || '/')
+    ) {
+      await next()
+      return
+    }
+
     const serveStaticResponse: ServerResponse & { parent?: HttpResponse } = response.response
     serveStaticResponse['parent'] = response
 

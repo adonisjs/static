@@ -36,6 +36,7 @@ import { type AssetsConfig } from './types.ts'
 export function defineConfig(config: Partial<AssetsConfig>): AssetsConfig {
   return {
     enabled: true,
+    indexFiles: false,
     dotFiles: 'ignore',
     etag: true,
     lastModified: true,

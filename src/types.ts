@@ -44,6 +44,13 @@ export type AssetsConfig = {
   enabled: boolean
 
   /**
+   * Index public files once when the middleware is constructed to skip filesystem lookups
+   * for missing paths. Defaults to false. Restart after adding files or directories.
+   * Symlinks and their descendants still use filesystem lookups.
+   */
+  indexFiles?: boolean
+
+  /**
    * Enable or disable accepting ranged requests.
    * When enabled, supports partial content requests (HTTP 206 responses)
    */
