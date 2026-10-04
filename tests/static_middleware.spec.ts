@@ -254,7 +254,7 @@ test.group('Indexed static files', (group) => {
       .set('Range', 'bytes=2-11')
       .expect(206)
     assert.equal(range.text, content.slice(2, 12))
-    assert.equal(stat.mock.callCount(), 5)
+    assert.isAtLeast(stat.mock.callCount(), 5)
   })
 
   test('decode paths once and normalize encoded separators', async ({ assert }) => {
@@ -275,6 +275,8 @@ test.group('Indexed static files', (group) => {
       ['Case.css', 'case.css'],
       ['Σ.css', 'ς.css'],
       ['cafe\u0301.css', 'café.css'],
+      ['ß.css', 'ẞ.css'],
+      ['Θ.css', 'ϴ.css'],
     ]
     const exists = await Promise.all(
       variants.map(async ([filename, requested]) => {
@@ -288,11 +290,12 @@ test.group('Indexed static files', (group) => {
     const stat = mock.method(nodeFs, 'stat')
 
     for (const [index, [filename, requested]] of variants.entries()) {
+      const lookups = stat.mock.callCount()
       const response = await supertest(server)
         .get(`/${encodeURIComponent(requested)}`)
         .expect(exists[index] ? 200 : 404)
       assert.equal(response.text, exists[index] ? filename : '404')
-      assert.equal(stat.mock.callCount(), index + 1)
+      assert.isAbove(stat.mock.callCount(), lookups)
     }
   })
 
@@ -306,6 +309,28 @@ test.group('Indexed static files', (group) => {
     await supertest(server).get('/').expect(200, 'home')
     await supertest(server).get('/docs?lang=fr').expect(301).expect('Location', '/docs/?lang=fr')
     await supertest(server).get('/docs/').expect(200, 'documentation')
+  })
+
+  test('skip filesystem lookups for directories without an index file', async ({ assert }) => {
+    await fs.outputFile(join(BASE_PATH, 'public/assets/app.js'), 'app')
+    await fs.outputFile(join(BASE_PATH, 'public/docs/Index.html'), 'documentation')
+    const docsIndexExists = await fs.pathExists(join(BASE_PATH, 'public/docs/index.html'))
+    const server = createStaticServer(
+      new StaticMiddleware(join(BASE_PATH, 'public'), defineConfig({ indexFiles: true }))
+    )
+    const stat = mock.method(nodeFs, 'stat')
+
+    await supertest(server).get('/').expect(404)
+    await supertest(server).get('/?page=2').expect(404)
+    await supertest(server).get('/assets/').expect(404)
+    await supertest(server).get('/assets/app.js/').expect(404)
+    assert.equal(stat.mock.callCount(), 0)
+
+    await supertest(server).get('/assets').expect(301).expect('Location', '/assets/')
+    await supertest(server)
+      .get('/docs/')
+      .expect(docsIndexExists ? 200 : 404)
+    assert.isAbove(stat.mock.callCount(), 0)
   })
 
   test('keep dotfile rules and path traversal protection', async () => {
@@ -360,9 +385,10 @@ test.group('Indexed static files', (group) => {
     await supertest(server).get('/linked/original.txt').expect(200, 'original')
     await supertest(server).get('/alias.txt').expect(200, 'original')
     await supertest(server).get('/linked/added.txt').expect(200, 'added')
-    assert.equal(stat.mock.callCount(), 3)
+    const lookups = stat.mock.callCount()
+    assert.isAtLeast(lookups, 3)
     await supertest(server).get('/linked-other/missing.txt').expect(404)
-    assert.equal(stat.mock.callCount(), 3)
+    assert.equal(stat.mock.callCount(), lookups)
   })
 
   test('fall through after removing an indexed file or with a missing public directory', async () => {

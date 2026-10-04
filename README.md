@@ -24,7 +24,7 @@ export default defineConfig({
 })
 ```
 
-The middleware scans `public/` once when it is constructed. GET and HEAD requests for paths absent from the index go directly to the next middleware without a filesystem lookup. Existing files still use `serve-static`, including its metadata checks, caching, range responses and dotfile rules. Directories retain their redirects and index-file handling. Symlinks and their descendants retain filesystem lookups.
+The middleware scans `public/` once, while the HTTP server boots. GET and HEAD requests for paths absent from the index go directly to the next middleware without a filesystem lookup. Existing files still use `serve-static`, including its metadata checks, caching, range responses and dotfile rules. Directories retain their redirects and index-file handling, and a path ending with a slash skips the lookup when the directory has no `index.html`. Symlinks and their descendants retain filesystem lookups.
 
 Indexing is disabled by default. Restart the application after adding files or directories. Leave it disabled during development or when serving uploads. The index costs memory proportional to the public directory's size and a synchronous directory scan on initialization. It indexes the whole public directory, not just Vite assets.
 

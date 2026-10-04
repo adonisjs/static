@@ -16,6 +16,19 @@ import type { HttpContext, HttpResponse } from '@adonisjs/core/http'
 import type { AssetsConfig } from './types.ts'
 
 /**
+ * Fold a path into the key used by the public files index.
+ *
+ * Two names the filesystem treats as the same file must produce the same key,
+ * otherwise an existing file is reported as missing. Uppercasing alone is not
+ * enough: "ẞ" (U+1E9E) and "ϴ" (U+03F4) are their own uppercase forms, yet
+ * case-insensitive filesystems such as APFS match them with "ß" and "Θ".
+ * Lowercasing first maps them onto those letters before uppercasing.
+ */
+function toIndexKey(path: string): string {
+  return path.normalize('NFC').toLowerCase().toUpperCase()
+}
+
+/**
  * Middleware to serve static assets from a pre-defined directory.
  *
  * This middleware integrates with the serve-static package to handle static file serving
@@ -37,6 +50,7 @@ export default class StaticMiddleware {
   #sendFile: RequestHandler<ServerResponse & { parent?: HttpResponse }>
 
   #publicPath: string
+  #publicPrefix: string
   #files?: Set<string>
   #symbolicLinks: string[] = []
 
@@ -62,16 +76,19 @@ export default class StaticMiddleware {
   constructor(publicPath: string, config: AssetsConfig) {
     const { dotFiles, indexFiles, ...rest } = config
     this.#publicPath = resolvePath(publicPath)
+    this.#publicPrefix = this.#publicPath.endsWith(sep) ? this.#publicPath : this.#publicPath + sep
 
     if (indexFiles) {
-      // Leave case and Unicode variants to serve-static and the underlying filesystem.
-      this.#files = new Set([this.#publicPath.normalize('NFC').toUpperCase()])
+      // Keys are relative to the public directory to keep the index small.
+      this.#files = new Set()
       try {
         for (const entry of readdirSync(this.#publicPath, {
           recursive: true,
           withFileTypes: true,
         })) {
-          const filePath = join(entry.parentPath, entry.name).normalize('NFC').toUpperCase()
+          const filePath = toIndexKey(
+            join(entry.parentPath, entry.name).slice(this.#publicPrefix.length)
+          )
           this.#files.add(filePath)
           if (entry.isSymbolicLink()) {
             this.#symbolicLinks.push(filePath + sep)
@@ -120,12 +137,23 @@ export default class StaticMiddleware {
 
     let filePath: string
     try {
-      const pathname = decodeURIComponent(url.split(/[?#]/, 1)[0])
-      filePath = resolvePath(this.#publicPath, `.${sep}${pathname}`).normalize('NFC').toUpperCase()
+      const pathname = url.split(/[?#]/, 1)[0]
+
+      // serve-static only looks for the index file when the path ends with a slash.
+      filePath = resolvePath(
+        this.#publicPath,
+        `.${sep}${decodeURIComponent(pathname)}`,
+        pathname.endsWith('/') ? 'index.html' : ''
+      )
     } catch {
       return true
     }
 
+    if (!filePath.startsWith(this.#publicPrefix)) {
+      return false
+    }
+
+    filePath = toIndexKey(filePath.slice(this.#publicPrefix.length))
     return (
       this.#files!.has(filePath) ||
       this.#symbolicLinks.some((prefix) => filePath.startsWith(prefix))
