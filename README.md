@@ -12,6 +12,24 @@ Middleware to serve static files from a given directory of your AdonisJS apps
 
 The documentation is available on the [AdonisJS website](https://docs.adonisjs.com/guides/static-file-server)
 
+## Indexing public files
+
+For deployments where public files do not change while the application is running, enable `indexFiles` in `config/static.ts`:
+
+```ts
+import { defineConfig } from '@adonisjs/static'
+
+export default defineConfig({
+  indexFiles: true,
+})
+```
+
+The middleware scans `public/` once when it is constructed. GET and HEAD requests for paths absent from the index go directly to the next middleware without a filesystem lookup. Existing files still use `serve-static`, including its metadata checks, caching, range responses and dotfile rules. Directories retain their redirects and index-file handling. Symlinks and their descendants retain filesystem lookups.
+
+Indexing is disabled by default. Restart the application after adding files or directories. Leave it disabled during development or when serving uploads. The index costs memory proportional to the public directory's size and a synchronous directory scan on initialization. It indexes the whole public directory, not just Vite assets.
+
+This reduces filesystem operations on missing paths. It does not eliminate file reads when serving an asset or guarantee fewer physical disk reads if the operating system already caches metadata.
+
 ## Contributing
 
 One of the primary goals of AdonisJS is to have a vibrant community of users and contributors who believes in the principles of the framework.
