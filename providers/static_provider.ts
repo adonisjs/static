@@ -66,15 +66,4 @@ export default class StaticProvider {
       return new StaticMiddleware(publicPath, config)
     })
   }
-
-  /**
-   * Construct the middleware while booting the HTTP server when public files
-   * are indexed, so that the directory scan does not delay the first request.
-   */
-  async boot() {
-    const config = this.app.config.get<any>('static', {})
-    if (this.app.getEnvironment() === 'web' && config.indexFiles) {
-      await this.app.container.make(StaticMiddleware)
-    }
-  }
 }

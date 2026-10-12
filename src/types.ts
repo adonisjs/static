@@ -44,12 +44,16 @@ export type AssetsConfig = {
   enabled: boolean
 
   /**
-   * Index public files once when the middleware is constructed (while booting the HTTP
-   * server) to skip filesystem lookups for missing paths. Defaults to false. Restart after
-   * adding files or directories.
-   * Symlinks and their descendants still use filesystem lookups.
+   * Limit static file serving to the given URL path prefixes. A request
+   * matches when its path equals a prefix or is nested under it, so
+   * "/assets" matches "/assets/app.js" but not "/assets-old/app.js".
+   * Other requests go to the next middleware without a filesystem lookup.
+   *
+   * The prefixes are compared as-is with the request URL and do not change
+   * the file path: "/assets/app.js" still serves "public/assets/app.js".
+   * When not defined, every request is looked up in the public directory.
    */
-  indexFiles?: boolean
+  prefixes?: string[]
 
   /**
    * Enable or disable accepting ranged requests.

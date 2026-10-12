@@ -8,25 +8,10 @@
  */
 
 import { type ServerResponse } from 'node:http'
-import { readdirSync } from 'node:fs'
-import { join, resolve as resolvePath, sep } from 'node:path'
 import type { NextFn } from '@adonisjs/core/types/http'
 import staticServer, { type RequestHandler } from 'serve-static'
 import type { HttpContext, HttpResponse } from '@adonisjs/core/http'
 import type { AssetsConfig } from './types.ts'
-
-/**
- * Fold a path into the key used by the public files index.
- *
- * Two names the filesystem treats as the same file must produce the same key,
- * otherwise an existing file is reported as missing. Uppercasing alone is not
- * enough: "ẞ" (U+1E9E) and "ϴ" (U+03F4) are their own uppercase forms, yet
- * case-insensitive filesystems such as APFS match them with "ß" and "Θ".
- * Lowercasing first maps them onto those letters before uppercasing.
- */
-function toIndexKey(path: string): string {
-  return path.normalize('NFC').toLowerCase().toUpperCase()
-}
 
 /**
  * Middleware to serve static assets from a pre-defined directory.
@@ -49,10 +34,10 @@ export default class StaticMiddleware {
    */
   #sendFile: RequestHandler<ServerResponse & { parent?: HttpResponse }>
 
-  #publicPath: string
-  #publicPrefix: string
-  #files?: Set<string>
-  #symbolicLinks: string[] = []
+  /**
+   * URL path prefixes the middleware is limited to, without trailing slashes
+   */
+  #prefixes?: string[]
 
   /**
    * Creates a new StaticMiddleware instance.
@@ -74,32 +59,10 @@ export default class StaticMiddleware {
    * ```
    */
   constructor(publicPath: string, config: AssetsConfig) {
-    const { dotFiles, indexFiles, ...rest } = config
-    this.#publicPath = resolvePath(publicPath)
-    this.#publicPrefix = this.#publicPath.endsWith(sep) ? this.#publicPath : this.#publicPath + sep
-
-    if (indexFiles) {
-      // Keys are relative to the public directory to keep the index small.
-      this.#files = new Set()
-      try {
-        for (const entry of readdirSync(this.#publicPath, {
-          recursive: true,
-          withFileTypes: true,
-        })) {
-          const filePath = toIndexKey(
-            join(entry.parentPath, entry.name).slice(this.#publicPrefix.length)
-          )
-          this.#files.add(filePath)
-          if (entry.isSymbolicLink()) {
-            this.#symbolicLinks.push(filePath + sep)
-          }
-        }
-      } catch (error) {
-        if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) {
-          throw error
-        }
-      }
-    }
+    const { dotFiles, prefixes, ...rest } = config
+    this.#prefixes = prefixes?.map((prefix) => {
+      return prefix.length > 1 ? prefix.replace(/\/+$/, '') : prefix
+    })
 
     this.#sendFile = staticServer(publicPath, {
       ...rest,
@@ -128,36 +91,16 @@ export default class StaticMiddleware {
   }
 
   /**
-   * Skip definite misses while leaving path validation and symlink resolution to serve-static.
+   * Check if the request URL path equals one of the configured prefixes
+   * or is nested under it.
    */
-  #isIndexed(url: string): boolean {
-    if (!url.startsWith('/')) {
-      return true
-    }
+  #matchesPrefix(url: string): boolean {
+    const queryIndex = url.indexOf('?')
+    const pathname = queryIndex === -1 ? url : url.slice(0, queryIndex)
 
-    let filePath: string
-    try {
-      const pathname = url.split(/[?#]/, 1)[0]
-
-      // serve-static only looks for the index file when the path ends with a slash.
-      filePath = resolvePath(
-        this.#publicPath,
-        `.${sep}${decodeURIComponent(pathname)}`,
-        pathname.endsWith('/') ? 'index.html' : ''
-      )
-    } catch {
-      return true
-    }
-
-    if (!filePath.startsWith(this.#publicPrefix)) {
-      return false
-    }
-
-    filePath = toIndexKey(filePath.slice(this.#publicPrefix.length))
-    return (
-      this.#files!.has(filePath) ||
-      this.#symbolicLinks.some((prefix) => filePath.startsWith(prefix))
-    )
+    return this.#prefixes!.some((prefix) => {
+      return pathname === prefix || pathname.startsWith(`${prefix}/`)
+    })
   }
 
   /**
@@ -181,11 +124,11 @@ export default class StaticMiddleware {
    * ```
    */
   async handle({ request, response }: HttpContext, next: NextFn): Promise<void> {
-    if (
-      this.#files &&
-      (request.request.method === 'GET' || request.request.method === 'HEAD') &&
-      !this.#isIndexed(request.request.url || '/')
-    ) {
+    /**
+     * Skip the filesystem lookup when the request is outside the
+     * configured prefixes.
+     */
+    if (this.#prefixes && !this.#matchesPrefix(request.request.url || '/')) {
       await next()
       return
     }
