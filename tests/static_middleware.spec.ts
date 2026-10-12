@@ -8,7 +8,9 @@
  */
 
 import fs from 'fs-extra'
+import nodeFs from 'node:fs'
 import { join } from 'node:path'
+import { mock } from 'node:test'
 import supertest from 'supertest'
 import { test } from '@japa/runner'
 import { createServer } from 'node:http'
@@ -183,5 +185,91 @@ test.group('Serve Static', (group) => {
     assert.property(headers, 'x-custom-path')
     assert.equal(headers['x-custom-path'], join(BASE_PATH, 'public', 'style.css'))
     assert.equal(text, 'body { background: #000 }')
+  })
+})
+
+test.group('Serve Static | prefixes', (group) => {
+  group.each.teardown(async () => {
+    mock.restoreAll()
+    await fs.remove(BASE_PATH)
+  })
+
+  function createStaticServer(prefixes: string[]) {
+    const serveStatic = new StaticMiddleware(join(BASE_PATH, 'public'), defineConfig({ prefixes }))
+
+    return createServer(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      await serveStatic.handle(ctx, () => {
+        ctx.response.status(404).send('404')
+        ctx.response.finish()
+      })
+    })
+  }
+
+  test('serve files under a prefix', async () => {
+    await fs.outputFile(join(BASE_PATH, 'public/assets/app.js'), 'app')
+    await fs.outputFile(join(BASE_PATH, 'public/robots.txt'), 'User-agent: *')
+    const server = createStaticServer(['/assets', '/robots.txt'])
+
+    await supertest(server).get('/assets/app.js?v=3').expect(200, 'app')
+    await supertest(server).get('/robots.txt').expect(200, 'User-agent: *')
+    await supertest(server).get('/assets').expect(301).expect('Location', '/assets/')
+  })
+
+  test('skip filesystem lookups outside the prefixes', async ({ assert }) => {
+    await fs.outputFile(join(BASE_PATH, 'public/logo.png'), 'logo')
+    await fs.outputFile(join(BASE_PATH, 'public/assets-old/app.js'), 'old')
+    const server = createStaticServer(['/assets'])
+    const stat = mock.method(nodeFs, 'stat')
+
+    await supertest(server).get('/dashboard?tab=assets').expect(404)
+    await supertest(server).get('/logo.png').expect(404)
+    await supertest(server).get('/assets-old/app.js').expect(404)
+    assert.equal(stat.mock.callCount(), 0)
+
+    await supertest(server).get('/assets/missing.js').expect(404)
+    assert.equal(stat.mock.callCount(), 1)
+  })
+
+  test('ignore trailing slashes in prefixes', async () => {
+    await fs.outputFile(join(BASE_PATH, 'public/assets/app.js'), 'app')
+    const server = createStaticServer(['/assets/'])
+
+    await supertest(server).get('/assets/app.js').expect(200, 'app')
+  })
+
+  test('match only the root path with the "/" prefix', async () => {
+    await fs.outputFile(join(BASE_PATH, 'public/index.html'), 'home')
+    await fs.outputFile(join(BASE_PATH, 'public/style.css'), 'body {}')
+    const server = createStaticServer(['/'])
+
+    await supertest(server).get('/').expect(200, 'home')
+    await supertest(server).get('/style.css').expect(404)
+  })
+
+  test('serve no file when prefixes are empty', async () => {
+    await fs.outputFile(join(BASE_PATH, 'public/style.css'), 'body {}')
+    const server = createStaticServer([])
+
+    await supertest(server).get('/style.css').expect(404)
+  })
+
+  test('propagate errors from next when skipping a request', async ({ assert }) => {
+    const serveStatic = new StaticMiddleware(
+      join(BASE_PATH, 'public'),
+      defineConfig({ prefixes: ['/assets'] })
+    )
+    const ctx = new HttpContextFactory().merge({ url: '/dashboard' }).create()
+
+    await assert.rejects(
+      () =>
+        serveStatic.handle(ctx, () => {
+          throw new Error('next failed')
+        }),
+      'next failed'
+    )
   })
 })

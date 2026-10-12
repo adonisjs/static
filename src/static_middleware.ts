@@ -35,6 +35,11 @@ export default class StaticMiddleware {
   #sendFile: RequestHandler<ServerResponse & { parent?: HttpResponse }>
 
   /**
+   * URL path prefixes the middleware is limited to, without trailing slashes
+   */
+  #prefixes?: string[]
+
+  /**
    * Creates a new StaticMiddleware instance.
    *
    * Initializes the middleware with a serve-static handler configured to serve files
@@ -54,7 +59,10 @@ export default class StaticMiddleware {
    * ```
    */
   constructor(publicPath: string, config: AssetsConfig) {
-    const { dotFiles, ...rest } = config
+    const { dotFiles, prefixes, ...rest } = config
+    this.#prefixes = prefixes?.map((prefix) => {
+      return prefix.length > 1 ? prefix.replace(/\/+$/, '') : prefix
+    })
 
     this.#sendFile = staticServer(publicPath, {
       ...rest,
@@ -83,6 +91,19 @@ export default class StaticMiddleware {
   }
 
   /**
+   * Check if the request URL path equals one of the configured prefixes
+   * or is nested under it.
+   */
+  #matchesPrefix(url: string): boolean {
+    const queryIndex = url.indexOf('?')
+    const pathname = queryIndex === -1 ? url : url.slice(0, queryIndex)
+
+    return this.#prefixes!.some((prefix) => {
+      return pathname === prefix || pathname.startsWith(`${prefix}/`)
+    })
+  }
+
+  /**
    * Handle the HTTP request to serve static files.
    *
    * This method attempts to serve a static file from the configured directory.
@@ -103,6 +124,15 @@ export default class StaticMiddleware {
    * ```
    */
   async handle({ request, response }: HttpContext, next: NextFn): Promise<void> {
+    /**
+     * Skip the filesystem lookup when the request is outside the
+     * configured prefixes.
+     */
+    if (this.#prefixes && !this.#matchesPrefix(request.request.url || '/')) {
+      await next()
+      return
+    }
+
     const serveStaticResponse: ServerResponse & { parent?: HttpResponse } = response.response
     serveStaticResponse['parent'] = response
 
