@@ -12,23 +12,23 @@ Middleware to serve static files from a given directory of your AdonisJS apps
 
 The documentation is available on the [AdonisJS website](https://docs.adonisjs.com/guides/static-file-server)
 
-## Indexing public files
+## Limiting lookups to URL prefixes
 
-For deployments where public files do not change while the application is running, enable `indexFiles` in `config/static.ts`:
+By default, the middleware looks for a file in `public/` on every request, including the requests your routes handle. Define `prefixes` in `config/static.ts` to limit the lookup to some URL paths:
 
 ```ts
 import { defineConfig } from '@adonisjs/static'
 
 export default defineConfig({
-  indexFiles: true,
+  prefixes: ['/assets', '/favicon.ico', '/robots.txt'],
 })
 ```
 
-The middleware scans `public/` once, while the HTTP server boots. GET and HEAD requests for paths absent from the index go directly to the next middleware without a filesystem lookup. Existing files still use `serve-static`, including its metadata checks, caching, range responses and dotfile rules. Directories retain their redirects and index-file handling, and a path ending with a slash skips the lookup when the directory has no `index.html`. Symlinks and their descendants retain filesystem lookups.
+A request matches when its path equals a prefix or is nested under it. `/assets/app.js` matches `/assets`, and `/assets-old/app.js` does not. All other requests go to the next middleware without a filesystem lookup.
 
-Indexing is disabled by default. Restart the application after adding files or directories. Leave it disabled during development or when serving uploads. The index costs memory proportional to the public directory's size and a synchronous directory scan on initialization. It indexes the whole public directory, not just Vite assets.
+The prefixes do not change the file path. `/assets/app.js` still serves `public/assets/app.js`.
 
-This reduces filesystem operations on missing paths. It does not eliminate file reads when serving an asset or guarantee fewer physical disk reads if the operating system already caches metadata.
+A file in `public/` with no matching prefix is not served. The middleware compares the prefixes as-is with the request URL, so it does not decode the path or ignore the case.
 
 ## Contributing
 
