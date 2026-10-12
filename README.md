@@ -12,24 +12,6 @@ Middleware to serve static files from a given directory of your AdonisJS apps
 
 The documentation is available on the [AdonisJS website](https://docs.adonisjs.com/guides/static-file-server)
 
-## Limiting lookups to URL prefixes
-
-By default, the middleware looks for a file in `public/` on every request, including the requests your routes handle. Define `prefixes` in `config/static.ts` to limit the lookup to some URL paths:
-
-```ts
-import { defineConfig } from '@adonisjs/static'
-
-export default defineConfig({
-  prefixes: ['/assets', '/favicon.ico', '/robots.txt'],
-})
-```
-
-A request matches when its path equals a prefix or is nested under it. `/assets/app.js` matches `/assets`, and `/assets-old/app.js` does not. All other requests go to the next middleware without a filesystem lookup.
-
-The prefixes do not change the file path. `/assets/app.js` still serves `public/assets/app.js`.
-
-A file in `public/` with no matching prefix is not served. The middleware compares the prefixes as-is with the request URL, so it does not decode the path or ignore the case.
-
 ## Contributing
 
 One of the primary goals of AdonisJS is to have a vibrant community of users and contributors who believes in the principles of the framework.
