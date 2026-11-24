@@ -234,6 +234,13 @@ test.group('Serve Static | prefixes', (group) => {
     assert.equal(stat.mock.callCount(), 1)
   })
 
+  test('match prefixes against the decoded URL path', async () => {
+    await fs.outputFile(join(BASE_PATH, 'public/my files/report.txt'), 'report')
+    const server = createStaticServer(['/my files'])
+
+    await supertest(server).get('/my%20files/report.txt').expect(200, 'report')
+  })
+
   test('ignore trailing slashes in prefixes', async () => {
     await fs.outputFile(join(BASE_PATH, 'public/assets/app.js'), 'app')
     const server = createStaticServer(['/assets/'])

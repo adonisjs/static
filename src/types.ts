@@ -49,8 +49,9 @@ export type AssetsConfig = {
    * "/assets" matches "/assets/app.js" but not "/assets-old/app.js".
    * Other requests go to the next middleware without a filesystem lookup.
    *
-   * The prefixes are compared as-is with the request URL and do not change
-   * the file path: "/assets/app.js" still serves "public/assets/app.js".
+   * The prefixes are compared with the decoded URL path, so write them as the
+   * folders are named, for example "/my files". They do not change the file
+   * path: "/assets/app.js" still serves "public/assets/app.js".
    * When not defined, every request is looked up in the public directory.
    */
   prefixes?: string[]

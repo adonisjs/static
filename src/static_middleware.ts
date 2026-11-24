@@ -94,10 +94,7 @@ export default class StaticMiddleware {
    * Check if the request URL path equals one of the configured prefixes
    * or is nested under it.
    */
-  #matchesPrefix(url: string): boolean {
-    const queryIndex = url.indexOf('?')
-    const pathname = queryIndex === -1 ? url : url.slice(0, queryIndex)
-
+  #matchesPrefix(pathname: string): boolean {
     return this.#prefixes!.some((prefix) => {
       return pathname === prefix || pathname.startsWith(`${prefix}/`)
     })
@@ -128,7 +125,7 @@ export default class StaticMiddleware {
      * Skip the filesystem lookup when the request is outside the
      * configured prefixes.
      */
-    if (this.#prefixes && !this.#matchesPrefix(request.request.url || '/')) {
+    if (this.#prefixes && !this.#matchesPrefix(request.url())) {
       await next()
       return
     }
