@@ -98,7 +98,7 @@ test.group('Serve Static', (group) => {
         await serveStatic.handle(ctx, () => {
           throw new Error('Route not found')
         })
-      } catch (error) {
+      } catch (error: any) {
         response.status(404).send(error.message)
       } finally {
         response.finish()
